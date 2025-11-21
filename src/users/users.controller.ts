@@ -9,7 +9,7 @@ export class UsersController {
     @Get('profile')
     @UseGuards(JwtAuthGuard)
     async getProfile(@Request() req) {
-        const user = await this.usersService.findById(req.user.id);
+        const user = await this.usersService.findById(req.user.userId);
 
         return {
             message: 'Profile fetched successfully',

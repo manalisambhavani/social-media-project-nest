@@ -52,7 +52,7 @@ export class AuthService {
         if (!isMatch) throw new UnauthorizedException('Invalid credentials');
 
         const payload = {
-            id: user.id,
+            userId: user.id,
             email: user.email,
         };
 

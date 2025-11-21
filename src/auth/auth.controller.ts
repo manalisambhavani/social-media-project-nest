@@ -4,7 +4,7 @@ import { IsEmail, IsNotEmpty, MinLength, IsString, Length, IsOptional, IsPhoneNu
 import { Transform } from 'class-transformer';
 import { UseGuards, Get, Request } from '@nestjs/common';
 import { JwtAuthGuard } from './jwt-auth.guard';
-import { User } from 'src/posts/post.entity';
+// import { User } from 'src/posts/post.entity';
 
 
 class SignupDto {
