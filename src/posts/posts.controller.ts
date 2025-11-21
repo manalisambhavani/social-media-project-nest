@@ -1,46 +1,19 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Req, Request, UseGuards } from '@nestjs/common';
-// import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, Request, UseGuards } from '@nestjs/common';
 import { PostService } from './posts.service';
-import { IsInt, IsNotEmpty, IsString, Length } from 'class-validator';
-import { Type } from 'class-transformer';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-
-export class CreatePostDto {
-    @IsString()
-    @IsNotEmpty()
-    @Length(5, 50)
-    title: string;
-
-    @IsString()
-    @Length(5, 300)
-    description: string;
-
-}
-
-export class UpdatePostDto {
-    @IsString()
-    @IsNotEmpty()
-    @Length(5, 50)
-    title: string;
-
-    @IsString()
-    @Length(5, 300)
-    description: string;
-}
-
+import { CreatePostDto } from './dto/create-post.dto';
+import { UpdatePostDto } from './dto/update-post.dto';
 
 @Controller('posts')
 export class PostController {
     constructor(private postservice: PostService) { }
 
-    @Post('create')
+    @Post('')
     @UseGuards(JwtAuthGuard)
     async createPost(@Body() dto: CreatePostDto, @Request() req) {
-        const userId = req.user.userId;
-        console.log("🚀 ~ PostController ~ createPost ~ req.user:", req.user)
+        const { userId } = req.user;
 
         const post = await this.postservice.create(dto, userId);
-
 
         return {
             message: 'Post created successfully',
@@ -48,10 +21,12 @@ export class PostController {
         };
     }
 
-    @Get('get-posts')
+    @Get('')
     @UseGuards(JwtAuthGuard)
-    async getActivePosts() {
-        const posts = await this.postservice.findAllActive();
+    async getActivePosts(
+        @Query('page') page: number = 1,
+        @Query('limit') limit: number = 5,) {
+        const posts = await this.postservice.findAllActive(Number(page), Number(limit));
 
         return {
             message: 'Posts fetched successfully',
@@ -59,14 +34,14 @@ export class PostController {
         };
     }
 
-    @Patch('update-post/:id')
+    @Patch(':id')
     @UseGuards(JwtAuthGuard)
     async updatePost(
         @Param('id') id: number,
         @Body() dto: UpdatePostDto,
         @Req() req
     ) {
-        const userId = req.user.userId; // from JWT
+        const { userId } = req.user;
 
         const post = await this.postservice.updatePost(id, dto, userId);
 
@@ -76,10 +51,10 @@ export class PostController {
         };
     }
 
-    @Delete('delete-post/:id')
+    @Delete(':id')
     @UseGuards(JwtAuthGuard)
     async deletePost(@Param('id') id: number, @Req() req) {
-        const userId = req.user.userId;
+        const { userId } = req.user;
 
         await this.postservice.deletePost(id, userId);
 
