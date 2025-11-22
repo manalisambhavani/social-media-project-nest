@@ -1,11 +1,10 @@
-// src/post/post.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Post } from './post.entity';
-import { User } from 'src/users/entities/entities/user.entity';
-import { CreatePostDto, UpdatePostDto } from './posts.controller';
-import { title } from 'process';
+import { User } from '../users/user.entity';
+import { CreatePostDto } from './dto/create-post.dto';
+import { UpdatePostDto } from './dto/update-post.dto';
 
 @Injectable()
 export class PostService {
@@ -29,59 +28,44 @@ export class PostService {
             userId: userId,
         });
 
-        const saved = await this.postRepo.save(post);
-        console.log("🚀 ~ PostService ~ create ~ saved:", saved)
-
-        return this.postRepo.findOne({
-            where: { id: saved.id },
-        });
+        return this.postRepo.save(post);
     }
 
-    async findAllActive() {
-        const posts = await this.postRepo.find({
+    async findAllActive(page: number = 1, limit: number = 10) {
+        const skip = (page - 1) * limit;
+
+        const [posts, total] = await this.postRepo.findAndCount({
             where: { isActive: true },
-            relations: ['user'],
-            select: {
-                id: true,
-                title: true,
-                description: true,
-                isActive: true,
-                user: {
-                    id: true,
-                    username: true,
-                },
-            },
+            skip,
+            take: limit,
+            order: { createdAt: 'DESC' },
         });
 
-        return posts;
+        return {
+            data: posts,
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
+            },
+        };
     }
+
 
     async updatePost(postId: number, dto: UpdatePostDto, userId: number) {
         const post = await this.postRepo.findOne({
             where: {
                 id: postId,
-                user: { id: userId }, // only post created by logged user
-                isActive: true,         // only active posts
-            },
-            relations: ['user'],     // to access post.user
-            select: {
-                id: true,
-                title: true,
-                description: true,
+                user: { id: userId },
                 isActive: true,
-                user: {
-                    id: true,
-                    username: true,
-                },
             },
         });
 
-        // If ANY of the conditions fail → single error
         if (!post) {
             throw new NotFoundException('Post not found');
         }
 
-        // Update
         post.title = dto.title ?? post.title;
         post.description = dto.description ?? post.description;
 
@@ -92,8 +76,8 @@ export class PostService {
         const post = await this.postRepo.findOne({
             where: {
                 id: postId,
-                user: { id: userId },   // check owner
-                isActive: true            // must be active
+                user: { id: userId },
+                isActive: true
             }
         });
 
@@ -101,7 +85,6 @@ export class PostService {
             throw new NotFoundException('Post not found');
         }
 
-        // Soft delete → only update active field
         post.isActive = false;
         await this.postRepo.save(post);
     }

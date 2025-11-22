@@ -1,6 +1,6 @@
 export class PostEntity { }
-import { User } from 'src/users/entities/entities/user.entity';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { User } from '../users/user.entity';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity()
 export class Post {
@@ -30,4 +30,11 @@ export class Post {
 
     @Column({ default: true })
     isActive: boolean;
+
+    @CreateDateColumn()
+    createdAt: Date;
+
+    @UpdateDateColumn()
+    updatedAt: Date;
+
 }

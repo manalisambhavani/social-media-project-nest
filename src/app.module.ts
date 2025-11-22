@@ -9,27 +9,30 @@ import { PostModule } from './posts/post.module';
 
 
 @Module({
-  imports: [ConfigModule.forRoot({
-    isGlobal: true, envFilePath: '.env',
-  }),
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
 
-  TypeOrmModule.forRootAsync({
-    imports: [ConfigModule],
-    inject: [ConfigService],
-    useFactory: (config: ConfigService) => ({
-      type: 'postgres',
-      host: config.get('db_host'),
-      port: +(config.get('db_port')),
-      username: config.get('db_username'),
-      password: config.get('db_password'),
-      database: config.get('db_name'),
-      autoLoadEntities: true,
-      synchronize: true, // ❗ Only for dev
-    })
-  }),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        type: 'postgres',
+        host: config.get('db_host'),
+        port: +(config.get('db_port')),
+        username: config.get('db_username'),
+        password: config.get('db_password'),
+        database: config.get('db_name'),
+        autoLoadEntities: true,
+        synchronize: true,
+      })
+    }),
     UsersModule,
     AuthModule,
-    PostModule],
+    PostModule
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
