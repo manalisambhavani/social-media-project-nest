@@ -11,7 +11,8 @@ import { PostModule } from './posts/post.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true, envFilePath: '.env',
+      isGlobal: true,
+      envFilePath: '.env',
     }),
 
     TypeOrmModule.forRootAsync({
@@ -25,7 +26,7 @@ import { PostModule } from './posts/post.module';
         password: config.get('db_password'),
         database: config.get('db_name'),
         autoLoadEntities: true,
-        synchronize: true, // ❗ Only for dev
+        synchronize: true,
       })
     }),
     UsersModule,
