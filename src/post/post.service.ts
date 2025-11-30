@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Post } from './post.entity';
-import { User } from '../users/user.entity';
+import { User } from '../user/user.entity';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 
@@ -17,7 +17,7 @@ export class PostService {
     ) { }
 
     async create(dto: CreatePostDto, userId: number) {
-        const user = await this.userRepo.findOne({ where: { id: userId } });
+        const user = await this.userRepo.findOne({ where: { id: userId, isActive: true } });
         if (!user) {
             throw new NotFoundException(`User not found`);
         }
@@ -34,7 +34,7 @@ export class PostService {
     async findAllActive(page: number = 1, limit: number = 10) {
         const skip = (page - 1) * limit;
 
-        const [posts, total] = await this.postRepo.findAndCount({
+        const [post, total] = await this.postRepo.findAndCount({
             where: { isActive: true },
             skip,
             take: limit,
@@ -42,7 +42,7 @@ export class PostService {
         });
 
         return {
-            data: posts,
+            data: post,
             meta: {
                 total,
                 page,

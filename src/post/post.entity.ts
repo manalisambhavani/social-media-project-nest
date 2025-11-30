@@ -1,8 +1,9 @@
 export class PostEntity { }
-import { User } from '../users/user.entity';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Comment } from '../comment/comment.entity';
+import { User } from '../user/user.entity';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 
-@Entity()
+@Entity('post')
 export class Post {
     @PrimaryGeneratedColumn()
     id: number;
@@ -19,14 +20,15 @@ export class Post {
     })
     description: string;
 
-    // This is the actual foreign key column
     @Column()
     userId: number;
 
-    // Relation with User entity
     @ManyToOne(() => User)
-    @JoinColumn({ name: 'userId' })  // maps FK column to the relation
+    @JoinColumn({ name: 'userId' })
     user: User;
+
+    @OneToMany(() => Comment, comment => comment.post, { cascade: true })
+    comment: Comment[];
 
     @Column({ default: true })
     isActive: boolean;

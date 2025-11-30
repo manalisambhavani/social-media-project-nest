@@ -1,7 +1,8 @@
 export class UserEntity { }
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Comment } from '../comment/comment.entity';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 
-@Entity()
+@Entity('user')
 export class User {
     @PrimaryGeneratedColumn()
     id: number;
@@ -38,6 +39,16 @@ export class User {
     })
     password: string;
 
+    @OneToMany(() => Comment, comment => comment.user)
+    comment: Comment[];
+
     @Column({ default: true })
     isActive: boolean;
+
+    @CreateDateColumn()
+    createdAt: Date;
+
+    @UpdateDateColumn()
+    updatedAt: Date;
+
 }
