@@ -4,9 +4,9 @@ import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
-import { PostModule } from './posts/post.module';
-
+import { UsersModule } from './user/user.module';
+import { PostModule } from './post/post.module';
+import { CommentModule } from './comment/comment.module';
 
 @Module({
   imports: [
@@ -26,12 +26,14 @@ import { PostModule } from './posts/post.module';
         password: config.get('db_password'),
         database: config.get('db_name'),
         autoLoadEntities: true,
-        synchronize: true,
+        synchronize: false,
+        migrations: ['dist/migrations/*.js'],
       })
     }),
     UsersModule,
     AuthModule,
-    PostModule
+    PostModule,
+    CommentModule
   ],
   controllers: [AppController],
   providers: [AppService],
