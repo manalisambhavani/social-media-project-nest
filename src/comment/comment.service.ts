@@ -38,7 +38,6 @@ export class CommentService {
         return this.commentRepo.save(newComment);
     }
 
-
     async getComments(postId: number, page: number, limit: number) {
         const skip = (page - 1) * limit;
 
@@ -105,7 +104,6 @@ export class CommentService {
         if (!comment) {
             throw new NotFoundException('comment not found');
         }
-
         comment.isActive = false;
         await this.commentRepo.save(comment);
     }
