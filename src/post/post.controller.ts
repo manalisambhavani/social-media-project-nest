@@ -23,15 +23,27 @@ export class PostController {
 
     @Get('')
     @UseGuards(JwtAuthGuard)
-    async getActivePosts(
-        @Query('page') page: number = 1,
-        @Query('limit') limit: number = 5,) {
-        const posts = await this.postservice.findAllActive(Number(page), Number(limit));
+    async getPosts(
+        @Req() req: any,
+        @Query('page') page: number,
+        @Query('limit') limit: number,) {
+
+        const userId = req.user.userId;
+
+        const result = await this.postservice.getPosts(userId, page, limit);
 
         return {
             message: 'Posts fetched successfully',
-            data: posts,
-        };
+            data: result.items,
+            pagination: {
+                totalItems: result.totalItems,
+                totalPages: result.totalPages,
+                currentPage: result.page,
+                pageSize: result.limit,
+                hasNextPage: result.page < result.totalPages,
+                hasPrevPage: result.page > 1
+            }
+        }
     }
 
     @Patch(':id')

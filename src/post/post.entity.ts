@@ -1,7 +1,8 @@
 export class PostEntity { }
+import { PostReaction } from '../post-reaction/post-reaction.entity';
 import { Comment } from '../comment/comment.entity';
 import { User } from '../user/user.entity';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn, OneToMany, OneToOne } from 'typeorm';
 
 @Entity('post')
 export class Post {
@@ -29,6 +30,9 @@ export class Post {
 
     @OneToMany(() => Comment, comment => comment.post, { cascade: true })
     comment: Comment[];
+
+    @OneToMany(() => PostReaction, reaction => reaction.post)
+    postReactions: PostReaction[];
 
     @Column({ default: true })
     isActive: boolean;

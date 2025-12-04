@@ -27,8 +27,16 @@ export class CommentController {
         @Param('postId') postId: number,
         @Query('page') page: number = 1,
         @Query('limit') limit: number = 10,
+        @Req() req: any
     ) {
-        const result = await this.commentService.getComments(postId, page, limit);
+        const userId = req.user.userId;
+
+        const result = await this.commentService.getComments(
+            postId,
+            page,
+            limit,
+            userId
+        );
 
         return {
             message: 'Comments fetched successfully',
@@ -36,6 +44,7 @@ export class CommentController {
             pagination: result.pagination,
         };
     }
+
 
     @Patch(':id')
     @UseGuards(JwtAuthGuard)

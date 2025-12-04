@@ -7,6 +7,8 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './user/user.module';
 import { PostModule } from './post/post.module';
 import { CommentModule } from './comment/comment.module';
+import { PostReactionModule } from './post-reaction/post-reaction.module';
+import { CommentReactionModule } from './comment-reaction/comment-reaction.module';
 
 @Module({
   imports: [
@@ -26,14 +28,15 @@ import { CommentModule } from './comment/comment.module';
         password: config.get('db_password'),
         database: config.get('db_name'),
         autoLoadEntities: true,
-        synchronize: false,
-        migrations: ['dist/migrations/*.js'],
+        synchronize: true,
       })
     }),
     UsersModule,
     AuthModule,
     PostModule,
-    CommentModule
+    CommentModule,
+    PostReactionModule,
+    CommentReactionModule
   ],
   controllers: [AppController],
   providers: [AppService],
