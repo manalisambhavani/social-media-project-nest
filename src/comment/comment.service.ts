@@ -23,10 +23,21 @@ export class CommentService {
     async create(dto: CreateCommentDto, userId: number) {
         const { message, postId } = dto;
 
-        const user = await this.userRepo.findOne({ where: { id: userId, isActive: true } });
+        const user = await this.userRepo.findOne({
+            where: {
+                id: userId,
+                isActive: true
+            }
+        });
+
         if (!user) throw new NotFoundException('User not found');
 
-        const post = await this.postRepo.findOne({ where: { id: postId } });
+        const post = await this.postRepo.findOne({
+            where: {
+                id: postId,
+                isActive: true
+            }
+        });
         if (!post) throw new NotFoundException('Post not found');
 
         const newComment = this.commentRepo.create({
@@ -38,31 +49,67 @@ export class CommentService {
         return this.commentRepo.save(newComment);
     }
 
-    async getComments(postId: number, page: number, limit: number) {
+    async getComments(postId: number, page: number, limit: number, userId: number) {
         const skip = (page - 1) * limit;
 
         const totalItems = await this.commentRepo.count({
             where: {
-                post: { id: postId },
+                post: {
+                    id: postId,
+                    isActive: true
+                },
                 isActive: true,
             },
         });
 
-        const comments = await this.commentRepo.find({
-            where: {
-                post: { id: postId },
-                isActive: true,
+        const comments = await this.commentRepo
+            .createQueryBuilder('comment')
+            .leftJoin('comment.user', 'user')
+            .leftJoin(
+                'comment.commentReactions',
+                'loggedReaction',
+                'loggedReaction.userId = :userId AND loggedReaction.isActive = true',
+                { userId }
+            )
+            .select([
+                'comment.id AS id',
+                'comment.message AS message',
+                'user.id AS user_id',
+                'user.username AS user_username',
+                'loggedReaction.id AS reaction_id',
+            ])
+            .addSelect(subQuery =>
+                subQuery
+                    .select('COUNT(*)')
+                    .from('comment-reactions', 'cr')
+                    .where('cr.commentId = comment.id')
+                    .andWhere('cr.isActive = true'),
+                'count'
+            )
+            .where('comment.postId = :postId', { postId })
+            .andWhere('comment.isActive = true')
+            .orderBy('comment.createdAt', 'DESC')
+            .skip(skip)
+            .take(limit)
+            .getRawMany();
+
+        const formatted = comments.map(row => ({
+            id: row.id,
+            message: row.message,
+            user: {
+                id: row.user_id,
+                username: row.user_username,
             },
-            relations: ['user'],
-            order: { id: 'DESC' },
-            skip,
-            take: limit,
-        });
+            userReactionOnComment: {
+                id: row.reaction_id ?? null,
+            },
+            count: Number(row.count),
+        }));
 
         const totalPages = Math.ceil(totalItems / limit);
 
         return {
-            data: comments,
+            data: formatted,
             pagination: {
                 totalItems,
                 totalPages,
@@ -73,6 +120,7 @@ export class CommentService {
             },
         };
     }
+
 
     async updateComment(commentId: number, dto: UpdateCommentDto, userId: number) {
         const comment = await this.commentRepo.findOne({

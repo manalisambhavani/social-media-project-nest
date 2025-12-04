@@ -32,7 +32,7 @@ export class Post {
     comment: Comment[];
 
     @OneToMany(() => PostReaction, reaction => reaction.post)
-    reactions: PostReaction[];
+    postReactions: PostReaction[];
 
     @Column({ default: true })
     isActive: boolean;

@@ -44,7 +44,7 @@ export class User {
     @OneToMany(() => Comment, comment => comment.user)
     comment: Comment[];
 
-    @OneToMany(() => PostReaction, (reaction) => reaction.user)
+    @OneToMany(() => PostReaction, reaction => reaction.user)
     postReactions: PostReaction[];
 
     @OneToMany(() => CommentReaction, (reaction) => reaction.user)

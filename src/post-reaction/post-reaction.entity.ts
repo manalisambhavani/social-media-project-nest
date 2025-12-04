@@ -19,13 +19,13 @@ export class PostReaction {
     @Column({ default: true })
     isActive: boolean;
 
-    @ManyToOne(() => User, (user) => user.postReactions, {
+    @ManyToOne(() => User, user => user.postReactions, {
         onDelete: 'CASCADE',
     })
     @JoinColumn({ name: 'userId' })
     user: User;
 
-    @ManyToOne(() => Post, post => post.reactions, {
+    @ManyToOne(() => Post, post => post.postReactions, {
         onDelete: 'CASCADE',
     })
     @JoinColumn({ name: 'postId' })
