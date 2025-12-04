@@ -32,13 +32,11 @@ export class PostService {
         if (!user) {
             throw new NotFoundException(`User not found`);
         }
-
         const post = this.postRepo.create({
             title: dto.title,
             description: dto.description,
             userId: userId,
         });
-
         return this.postRepo.save(post);
     }
 
@@ -48,7 +46,6 @@ export class PostService {
         const query = this.postRepo
             .createQueryBuilder('post')
             .leftJoinAndSelect('post.user', 'user')
-
             .leftJoin(
                 PostReaction,
                 'userReaction',
@@ -92,7 +89,6 @@ export class PostService {
         const totalItems = await this.postRepo.count({
             where: { isActive: true }
         });
-
         const response = entities.map((post, index) => {
             const row = raw[index];
 
@@ -126,8 +122,6 @@ export class PostService {
         };
     }
 
-
-
     async updatePost(postId: number, dto: UpdatePostDto, userId: number) {
         const post = await this.postRepo.findOne({
             where: {
@@ -140,7 +134,6 @@ export class PostService {
         if (!post) {
             throw new NotFoundException('Post not found');
         }
-
         post.title = dto.title ?? post.title;
         post.description = dto.description ?? post.description;
 

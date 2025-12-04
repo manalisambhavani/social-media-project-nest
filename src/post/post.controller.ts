@@ -31,7 +31,6 @@ export class PostController {
         const userId = req.user.userId;
 
         const result = await this.postservice.getPosts(userId, page, limit);
-
         return {
             message: 'Posts fetched successfully',
             data: result.items,
@@ -67,9 +66,7 @@ export class PostController {
     @UseGuards(JwtAuthGuard)
     async deletePost(@Param('id') id: number, @Req() req) {
         const { userId } = req.user;
-
         await this.postservice.deletePost(id, userId);
-
         return {
             message: 'Post deleted successfully',
         };

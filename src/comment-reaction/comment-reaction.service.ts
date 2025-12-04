@@ -21,11 +21,9 @@ export class CommentReactionService {
                 isActive: true
             },
         });
-
         if (!comment) {
             throw new NotFoundException('Comment not found');
         }
-
         const existingReaction = await this.commentReactionRepo.findOne({
             where: {
                 commentId,
@@ -33,16 +31,13 @@ export class CommentReactionService {
                 isActive: true
             },
         });
-
         if (existingReaction) {
             throw new ConflictException('Reaction already exists');
         }
-
         const newReaction = this.commentReactionRepo.create({
             commentId,
             userId
         });
-
         await this.commentReactionRepo.save(newReaction);
 
         return {
@@ -62,7 +57,6 @@ export class CommentReactionService {
         if (!comment) {
             throw new NotFoundException('Comment not found');
         }
-
         const reactions = await this.commentReactionRepo.find({
             where: {
                 commentId: +commentId,
@@ -70,7 +64,6 @@ export class CommentReactionService {
             },
             select: ['id', 'userId', 'commentId'],
         });
-
         return {
             message: 'Reactions fetched successfully',
             data: reactions,
@@ -85,14 +78,11 @@ export class CommentReactionService {
                 isActive: true,
             },
         });
-
         if (!reaction) {
             throw new NotFoundException('Reaction does not exist');
         }
-
         reaction.isActive = false;
         await this.commentReactionRepo.save(reaction);
-
         return {
             message: 'Reaction removed successfully',
         };

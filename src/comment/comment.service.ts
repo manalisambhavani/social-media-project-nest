@@ -121,7 +121,6 @@ export class CommentService {
         };
     }
 
-
     async updateComment(commentId: number, dto: UpdateCommentDto, userId: number) {
         const comment = await this.commentRepo.findOne({
             where: {
@@ -130,13 +129,10 @@ export class CommentService {
                 isActive: true,
             },
         });
-
         if (!comment) {
             throw new NotFoundException('comment not found');
         }
-
         comment.message = dto.message;
-
         return await this.commentRepo.save(comment);
     }
 
@@ -148,7 +144,6 @@ export class CommentService {
                 isActive: true
             }
         });
-
         if (!comment) {
             throw new NotFoundException('comment not found');
         }
