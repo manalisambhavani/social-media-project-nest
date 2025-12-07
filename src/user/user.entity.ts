@@ -1,7 +1,7 @@
 export class UserEntity { }
 import { PostReaction } from '../post-reaction/post-reaction.entity';
 import { Comment } from '../comment/comment.entity';
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, DeleteDateColumn } from 'typeorm';
 import { CommentReaction } from '../comment-reaction/comment-reaction.entity';
 
 @Entity('user')
@@ -50,8 +50,8 @@ export class User {
     @OneToMany(() => CommentReaction, (reaction) => reaction.user)
     commentReactions: CommentReaction[];
 
-    @Column({ default: true })
-    isActive: boolean;
+    @DeleteDateColumn()
+    deletedAt: Date;
 
     @CreateDateColumn()
     createdAt: Date;

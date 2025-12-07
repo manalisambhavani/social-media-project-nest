@@ -6,12 +6,25 @@ import { User } from '../user/user.entity';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PostReaction } from '../post-reaction/post-reaction.entity';
+import { CommentReaction } from '../comment-reaction/comment-reaction.entity';
+import { In } from 'typeorm';
+import { Comment } from 'src/comment/comment.entity';
+
 
 @Injectable()
 export class PostService {
     constructor(
         @InjectRepository(Post)
         private readonly postRepo: Repository<Post>,
+
+        @InjectRepository(PostReaction)
+        private readonly postReactionRepo: Repository<PostReaction>,
+
+        @InjectRepository(Comment)
+        private readonly commentRepo: Repository<Comment>,
+
+        @InjectRepository(CommentReaction)
+        private readonly commentReactionRepo: Repository<CommentReaction>,
 
         @InjectRepository(User)
         private readonly userRepo: Repository<User>,
@@ -28,7 +41,11 @@ export class PostService {
     }
 
     async create(dto: CreatePostDto, userId: number) {
-        const user = await this.userRepo.findOne({ where: { id: userId, isActive: true } });
+        const user = await this.userRepo.findOne({
+            where: {
+                id: userId
+            }
+        });
         if (!user) {
             throw new NotFoundException(`User not found`);
         }
@@ -52,13 +69,14 @@ export class PostService {
             .leftJoin(
                 PostReaction,
                 'userReaction',
-                'userReaction.postId = post.id AND userReaction.userId = :userId AND userReaction.isActive = true',
+                '"userReaction"."postId" = post.id AND "userReaction"."userId" = :userId AND "userReaction"."deletedAt" IS NULL',
                 { userId }
             )
             .addSelect([
                 'userReaction.id',
                 'userReaction.reactionName'
             ])
+
             .addSelect(subQuery => {
                 return subQuery
                     .select(`
@@ -78,20 +96,17 @@ export class PostService {
                             .addSelect(`COUNT(*)`, 'count')
                             .from(PostReaction, 'pr2')
                             .where('pr2."postId" = post.id')
-                            .andWhere('pr2."isActive" = true')
+                            .andWhere('pr2."deletedAt" IS NULL')
                             .groupBy('pr2."reactionName"');
                     }, 'pr');
             }, 'reactionCounts')
-            .where('post.isActive = true')
             .orderBy('post.createdAt', 'DESC')
             .skip(offset)
             .take(limit);
 
         const { raw, entities } = await query.getRawAndEntities();
 
-        const totalItems = await this.postRepo.count({
-            where: { isActive: true }
-        });
+        const totalItems = await this.postRepo.count();
 
         const response = entities.map((post, index) => {
             const row = raw[index];
@@ -126,14 +141,11 @@ export class PostService {
         };
     }
 
-
-
     async updatePost(postId: number, dto: UpdatePostDto, userId: number) {
         const post = await this.postRepo.findOne({
             where: {
                 id: postId,
                 user: { id: userId },
-                isActive: true,
             },
         });
 
@@ -149,19 +161,30 @@ export class PostService {
 
     async deletePost(postId: number, userId: number) {
         const post = await this.postRepo.findOne({
-            where: {
-                id: postId,
-                user: { id: userId },
-                isActive: true
-            }
+            where: { id: postId, userId },
         });
 
         if (!post) {
             throw new NotFoundException('Post not found');
         }
 
-        post.isActive = false;
-        await this.postRepo.save(post);
-    }
+        await this.postRepo.softDelete(postId);
 
+        await this.postReactionRepo.softDelete({ postId });
+
+        const comments = await this.commentRepo.find({
+            where: { postId },
+        });
+
+        const commentIds = comments.map(c => c.id);
+
+        if (commentIds.length > 0) {
+            await this.commentRepo.softDelete(commentIds);
+
+            await this.commentReactionRepo.softDelete({
+                commentId: In(commentIds),
+            });
+        }
+        return { message: 'Post and related data soft-deleted successfully' };
+    }
 }

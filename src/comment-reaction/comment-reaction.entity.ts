@@ -1,6 +1,6 @@
 import { Comment } from '../comment/comment.entity';
 import { User } from '../user/user.entity';
-import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn, OneToMany, DeleteDateColumn } from 'typeorm';
 
 @Entity('comment-reactions')
 export class CommentReaction {
@@ -22,8 +22,8 @@ export class CommentReaction {
     @JoinColumn({ name: 'userId' })
     user: User;
 
-    @Column({ type: 'boolean', default: true })
-    isActive: boolean;
+    @DeleteDateColumn()
+    deletedAt: Date;
 
     @CreateDateColumn()
     createdAt: Date;
