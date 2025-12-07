@@ -69,8 +69,7 @@ export class PostService {
             .leftJoin(
                 PostReaction,
                 'userReaction',
-                '"userReaction"."postId" = post.id AND "userReaction"."userId" = :userId AND "userReaction"."deletedAt" IS NULL'
-                ,
+                '"userReaction"."postId" = post.id AND "userReaction"."userId" = :userId AND "userReaction"."deletedAt" IS NULL',
                 { userId }
             )
             .addSelect([
@@ -186,9 +185,6 @@ export class PostService {
                 commentId: In(commentIds),
             });
         }
-
         return { message: 'Post and related data soft-deleted successfully' };
     }
-
-
 }
