@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { PostReactionDto } from './dto/post-reaction.dto';
 import { Post } from '../post/post.entity';
 import { PostReaction } from './post-reaction.entity';
@@ -26,7 +26,7 @@ export class PostReactionService {
         const post = await this.postRepo.findOne({
             where: {
                 id: postId,
-                isActive: true
+                deletedAt: IsNull(),
             },
         });
 
@@ -38,7 +38,7 @@ export class PostReactionService {
             where: {
                 postId,
                 userId,
-                isActive: true,
+                deletedAt: IsNull(),
             },
         });
 
@@ -61,7 +61,10 @@ export class PostReactionService {
 
     async listReactions(postId: number) {
         const post = await this.postRepo.findOne({
-            where: { id: postId, isActive: true },
+            where: {
+                id: postId,
+                deletedAt: IsNull(),
+            },
         });
 
         if (!post) {
@@ -71,7 +74,7 @@ export class PostReactionService {
         const reactions = await this.postReactionRepo.find({
             where: {
                 postId,
-                isActive: true
+                deletedAt: IsNull(),
             },
         });
 
@@ -96,7 +99,7 @@ export class PostReactionService {
             where: {
                 id: reactionId,
                 userId: userId,
-                isActive: true,
+                deletedAt: IsNull(),
             },
         });
 
@@ -104,8 +107,7 @@ export class PostReactionService {
             throw new NotFoundException('Reaction does not exist');
         }
 
-        reaction.isActive = false;
-        await this.postReactionRepo.save(reaction);
+        await this.postReactionRepo.softDelete(reactionId);
 
         return {
             message: 'Reaction removed successfully',

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { CommentReaction } from './comment-reaction.entity';
 import { Comment } from '../comment/comment.entity';
 
@@ -18,7 +18,7 @@ export class CommentReactionService {
         const comment = await this.commentRepo.findOne({
             where: {
                 id: commentId,
-                isActive: true
+                deletedAt: IsNull(),
             },
         });
 
@@ -30,7 +30,7 @@ export class CommentReactionService {
             where: {
                 commentId,
                 userId,
-                isActive: true
+                deletedAt: IsNull(),
             },
         });
 
@@ -52,10 +52,12 @@ export class CommentReactionService {
     }
 
     async getReactionsByComment(commentId: string) {
+        const id = +commentId;
+
         const comment = await this.commentRepo.findOne({
             where: {
-                id: +commentId,
-                isActive: true
+                id,
+                deletedAt: IsNull(),
             },
         });
 
@@ -65,8 +67,8 @@ export class CommentReactionService {
 
         const reactions = await this.commentReactionRepo.find({
             where: {
-                commentId: +commentId,
-                isActive: true
+                commentId: id,
+                deletedAt: IsNull(),
             },
             select: ['id', 'userId', 'commentId'],
         });
@@ -78,11 +80,13 @@ export class CommentReactionService {
     }
 
     async deleteReaction(reactionId: string, userId: number) {
+        const id = +reactionId;
+
         const reaction = await this.commentReactionRepo.findOne({
             where: {
-                id: +reactionId,
-                userId: userId,
-                isActive: true,
+                id,
+                userId,
+                deletedAt: IsNull(),
             },
         });
 
@@ -90,8 +94,7 @@ export class CommentReactionService {
             throw new NotFoundException('Reaction does not exist');
         }
 
-        reaction.isActive = false;
-        await this.commentReactionRepo.save(reaction);
+        await this.commentReactionRepo.softDelete(id);
 
         return {
             message: 'Reaction removed successfully',

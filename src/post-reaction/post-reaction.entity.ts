@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn, DeleteDateColumn } from 'typeorm';
 import { User } from '../user/user.entity';
 import { Post } from '../post/post.entity';
 
@@ -16,9 +16,6 @@ export class PostReaction {
     @Column()
     userId: number;
 
-    @Column({ default: true })
-    isActive: boolean;
-
     @ManyToOne(() => User, user => user.postReactions, {
         onDelete: 'CASCADE',
     })
@@ -30,6 +27,9 @@ export class PostReaction {
     })
     @JoinColumn({ name: 'postId' })
     post: Post;
+
+    @DeleteDateColumn()
+    deletedAt: Date;
 
     @CreateDateColumn()
     createdAt: Date;

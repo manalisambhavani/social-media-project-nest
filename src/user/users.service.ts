@@ -38,7 +38,7 @@ export class UsersService {
     async findById(id: number) {
         return this.userRepo.findOne({
             where: { id },
-            select: ['username', 'firstName', 'lastName', 'email'], // only these fields
+            select: ['username', 'firstName', 'lastName', 'email'],
         });
     }
 
