@@ -9,6 +9,7 @@ import { PostModule } from './post/post.module';
 import { CommentModule } from './comment/comment.module';
 import { PostReactionModule } from './post-reaction/post-reaction.module';
 import { CommentReactionModule } from './comment-reaction/comment-reaction.module';
+import { FriendRequestModule } from './friend-request/friend-request.module';
 
 @Module({
   imports: [
@@ -36,7 +37,8 @@ import { CommentReactionModule } from './comment-reaction/comment-reaction.modul
     PostModule,
     CommentModule,
     PostReactionModule,
-    CommentReactionModule
+    CommentReactionModule,
+    FriendRequestModule
   ],
   controllers: [AppController],
   providers: [AppService],
