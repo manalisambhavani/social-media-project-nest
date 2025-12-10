@@ -3,6 +3,7 @@ import { PostReaction } from '../post-reaction/post-reaction.entity';
 import { Comment } from '../comment/comment.entity';
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, DeleteDateColumn } from 'typeorm';
 import { CommentReaction } from '../comment-reaction/comment-reaction.entity';
+import { FriendRequest } from 'src/friend-request/friend-request.entity';
 
 @Entity('user')
 export class User {
@@ -49,6 +50,13 @@ export class User {
 
     @OneToMany(() => CommentReaction, (reaction) => reaction.user)
     commentReactions: CommentReaction[];
+
+    @OneToMany(() => FriendRequest, fr => fr.sender)
+    sentRequests: FriendRequest[];
+
+    @OneToMany(() => FriendRequest, fr => fr.receiver)
+    receivedRequests: FriendRequest[];
+
 
     @DeleteDateColumn()
     deletedAt: Date;
