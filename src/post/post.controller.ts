@@ -26,11 +26,19 @@ export class PostController {
     async getPosts(
         @Req() req: any,
         @Query('page') page: number,
-        @Query('limit') limit: number,) {
+        @Query('limit') limit: number,
+        @Query('dateFrom') dateFrom: string,
+        @Query('dateTo') dateTo: string,
+        @Query('sortOrder') sortOrder: 'ASC' | 'DESC') {
 
         const userId = req.user.userId;
 
-        const result = await this.postservice.getPosts(userId, page, limit);
+        const result = await this.postservice.getPosts(
+            userId,
+            page,
+            limit,
+            { dateFrom, dateTo },
+            { sortBy: 'post.updatedAt', sortOrder });
 
         return {
             message: 'Posts fetched successfully',

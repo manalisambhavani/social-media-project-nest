@@ -48,77 +48,116 @@ export class CommentService {
         return this.commentRepo.save(newComment);
     }
 
-    async getComments(postId: number, page: number, limit: number, userId: number) {
+    async getComments(
+        postId: number,
+        page: number = 1,
+        limit: number = 10,
+        userId: number,
+        filters?: { dateFrom?: string; dateTo?: string },
+        sort?: { sortBy?: string; sortOrder?: 'ASC' | 'DESC' }
+    ) {
         const skip = (page - 1) * limit;
 
         const totalItems = await this.commentRepo.count({
             where: {
-                post: {
-                    id: postId
-                },
+                post: { id: postId },
                 deletedAt: IsNull(),
             },
         });
 
-        const comments = await this.commentRepo
+        const baseQuery = this.commentRepo
             .createQueryBuilder('comment')
-            .leftJoin('comment.user', 'user')
-            .leftJoin(
-                'comment.commentReactions',
-                'loggedReaction',
-                'loggedReaction.userId = :userId AND loggedReaction.deletedAt IS NULL',
-                { userId }
-            )
-            .select([
-                'comment.id AS id',
-                'comment.message AS message',
-                'user.id AS user_id',
-                'user.username AS user_username',
-                'loggedReaction.id AS reaction_id',
-            ])
-            .addSelect(subQuery =>
-                subQuery
-                    .select('COUNT(*)')
-                    .from('comment-reactions', 'cr')
-                    .where('cr.commentId = comment.id')
-                    .andWhere('cr.deletedAt IS NULL'),
-                'count'
-            )
+            .leftJoinAndSelect('comment.user', 'user')
             .where('comment.postId = :postId', { postId })
-            .andWhere('comment.deletedAt IS NULL')
-            .orderBy('comment.createdAt', 'DESC')
-            .skip(skip)
-            .take(limit)
+            .andWhere('comment.deletedAt IS NULL');
+
+        if (filters?.dateFrom) {
+            baseQuery.andWhere('comment.createdAt >= :dateFrom', {
+                dateFrom: filters.dateFrom,
+            });
+        }
+        if (filters?.dateTo) {
+            baseQuery.andWhere('comment.createdAt <= :dateTo', {
+                dateTo: filters.dateTo,
+            });
+        }
+
+        const sortBy = sort?.sortBy ?? 'comment.updatedAt';
+        const sortOrder = sort?.sortOrder ?? 'DESC';
+
+        baseQuery.orderBy(sortBy, sortOrder);
+
+        baseQuery.skip(skip).take(limit);
+
+        const comments = await baseQuery.getMany();
+
+        if (comments.length === 0) {
+            return {
+                data: [],
+                pagination: {
+                    totalItems,
+                    totalPages: Math.ceil(totalItems / limit),
+                    currentPage: page,
+                    pageSize: limit,
+                    hasNextPage: false,
+                    hasPrevPage: page > 1,
+                },
+            };
+        }
+
+        const commentIds = comments.map(c => c.id);
+
+        const userReactions = await this.commentReactionRepo
+            .createQueryBuilder('cr')
+            .select(['cr.id', 'cr.commentId'])
+            .where('cr.commentId IN (:...commentIds)', { commentIds })
+            .andWhere('cr.userId = :userId', { userId })
+            .andWhere('cr.deletedAt IS NULL')
+            .getMany();
+
+        const userReactionMap = new Map(
+            userReactions.map(r => [r.commentId, r]),
+        );
+
+        const reactionCounts = await this.commentReactionRepo
+            .createQueryBuilder('cr')
+            .select('cr.commentId', 'commentId')
+            .addSelect('COUNT(*)', 'count')
+            .where('cr.commentId IN (:...commentIds)', { commentIds })
+            .andWhere('cr.deletedAt IS NULL')
+            .groupBy('cr.commentId')
             .getRawMany();
 
+        const countMap = new Map(
+            reactionCounts.map(r => [Number(r.commentId), Number(r.count)]),
+        );
 
-        const formatted = comments.map(row => ({
-            id: row.id,
-            message: row.message,
+        const formatted = comments.map(comment => ({
+            id: comment.id,
+            message: comment.message,
             user: {
-                id: row.user_id,
-                username: row.user_username,
+                id: comment.user.id,
+                username: comment.user.username,
             },
-            userReactionOnComment: {
-                id: row.reaction_id ?? null,
-            },
-            count: Number(row.count),
+            userReactionOnComment: userReactionMap.get(comment.id)
+                ? { id: userReactionMap.get(comment.id)!.id }
+                : null,
+            count: countMap.get(comment.id) || 0,
         }));
-
-        const totalPages = Math.ceil(totalItems / limit);
 
         return {
             data: formatted,
             pagination: {
                 totalItems,
-                totalPages,
+                totalPages: Math.ceil(totalItems / limit),
                 currentPage: page,
                 pageSize: limit,
-                hasNextPage: page < totalPages,
+                hasNextPage: page < Math.ceil(totalItems / limit),
                 hasPrevPage: page > 1,
             },
         };
     }
+
 
     async updateComment(commentId: number, dto: UpdateCommentDto, userId: number) {
         const comment = await this.commentRepo.findOne({

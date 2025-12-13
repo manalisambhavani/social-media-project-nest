@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CommentService } from './comment.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
@@ -24,18 +24,30 @@ export class CommentController {
     @Get(':postId')
     @UseGuards(JwtAuthGuard)
     async getComments(
+        @Req() req: any,
         @Param('postId') postId: number,
-        @Query('page') page: number = 1,
-        @Query('limit') limit: number = 10,
-        @Req() req: any
+        @Query('page') page: number,
+        @Query('limit') limit: number,
+        @Query('dateFrom') dateFrom?: string,
+        @Query('dateTo') dateTo?: string,
+        @Query('sortBy') sortBy?: string,
+        @Query('sortOrder') sortOrder?: 'ASC' | 'DESC',
     ) {
         const userId = req.user.userId;
 
         const result = await this.commentService.getComments(
-            postId,
-            page,
-            limit,
-            userId
+            Number(postId),
+            Number(page),
+            Number(limit),
+            userId,
+            {
+                dateFrom,
+                dateTo,
+            },
+            {
+                sortBy,
+                sortOrder,
+            },
         );
 
         return {
