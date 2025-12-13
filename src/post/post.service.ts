@@ -59,7 +59,19 @@ export class PostService {
         return this.postRepo.save(post);
     }
 
-    async getPosts(userId: number, page = 1, limit = 10) {
+    async getPosts(
+        userId: number,
+        page = 1,
+        limit = 10,
+        filters?: {
+            dateFrom?: string;
+            dateTo?: string;
+        },
+        sort?: {
+            sortBy?: string;
+            sortOrder?: 'ASC' | 'DESC'
+        }
+    ) {
         const offset = (page - 1) * limit;
 
         const query = this.postRepo
@@ -103,6 +115,23 @@ export class PostService {
             .orderBy('post.createdAt', 'DESC')
             .skip(offset)
             .take(limit);
+        if (filters?.dateFrom) {
+            query.andWhere('post.createdAt >= :dateFrom', {
+                dateFrom: filters.dateFrom
+            });
+        }
+
+        if (filters?.dateTo) {
+            query.andWhere('post.createdAt <= :dateTo', {
+                dateTo: filters.dateTo
+            });
+        }
+
+        const sortBy = sort?.sortBy || 'post.updatedAt';
+        const sortOrder = sort?.sortOrder || 'DESC';
+
+        query.orderBy(sortBy, sortOrder);
+
 
         const { raw, entities } = await query.getRawAndEntities();
 
