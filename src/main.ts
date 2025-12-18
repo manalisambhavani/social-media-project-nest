@@ -5,9 +5,10 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  app.enableCors();
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,            // removes extra fields
-    forbidNonWhitelisted: true, // throw error on unknown fields
+    forbidNonWhitelisted: false, // throw error on unknown fields
     transform: true,            // auto-cast payloads to DTO class
   }));
 
