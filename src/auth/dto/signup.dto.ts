@@ -45,4 +45,10 @@ export class SignupDto {
             "Password must contain at least one uppercase, one lowercase, one number, and one special character",
     })
     password: string;
+
+    @IsNotEmpty()
+    @IsString()
+    @Length(6, 50)
+    @Matches(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).+$/)
+    confirmPassword: string;
 }

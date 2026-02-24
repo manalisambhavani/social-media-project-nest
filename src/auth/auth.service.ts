@@ -1,10 +1,12 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { Repository } from 'typeorm';
 import { User } from '../user/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UsersService } from '../user/users.service';
+import { randomUUID } from 'crypto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -23,6 +25,7 @@ export class AuthService {
         contactNo: string,
         password: string
     ) {
+
         const exists = await this.userRepo.findOne({
             where: [
                 { username },
@@ -59,4 +62,52 @@ export class AuthService {
         const token = await this.jwtService.signAsync(payload);
         return { user, token };
     }
+
+    async forgotPassword(email: string) {
+        const user = await this.userRepo.findOne({ where: { email } });
+
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        const resetToken = randomUUID();
+
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000);
+
+        await this.userRepo.save(user);
+
+        return {
+            message: 'Password reset link sent',
+            token: resetToken,
+        };
+    }
+
+    async resetPassword(dto: ResetPasswordDto) {
+        if (dto.password !== dto.confirmPassword) {
+            throw new BadRequestException('Passwords do not match');
+        }
+
+        const user = await this.userRepo.findOne({
+            where: {
+                resetPasswordToken: dto.token,
+            },
+        });
+
+        if (!user ||
+            !user.resetPasswordExpires ||
+            user.resetPasswordExpires < new Date()) {
+            throw new BadRequestException('Invalid or expired token');
+        }
+
+        user.password = await bcrypt.hash(dto.password, 10);
+        user.resetPasswordToken = null;
+        user.resetPasswordExpires = null;
+
+        await this.userRepo.save(user);
+
+        return { message: 'Password reset successful' };
+    }
+
+
 }

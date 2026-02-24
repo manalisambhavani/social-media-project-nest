@@ -42,6 +42,12 @@ export class User {
     })
     password: string;
 
+    @Column({ type: 'varchar', nullable: true })
+    resetPasswordToken: string | null;
+
+    @Column({ type: 'timestamp', nullable: true })
+    resetPasswordExpires: Date | null;
+
     @OneToMany(() => Comment, comment => comment.user)
     comment: Comment[];
 
